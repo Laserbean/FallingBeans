@@ -18,6 +18,16 @@ public static class Chunks
         tilemap.SetTiles(positions, tileArray);
     }
 
+    public static void fillChunkWithNull(Vector2Int chunkpos, Tilemap tilemap) {
+        Vector3Int[] positions = new Vector3Int[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+        TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
+        for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
+            tileArray[ii] = null; 
+            positions[ii] =(Vector3Int)chunkpos + new Vector3Int((int) ii%Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE, 0);
+        }
+        tilemap.SetTiles(positions, tileArray);
+    }
+
     public static void fillSolidChunk(Vector2Int chunkpos, Tilemap tilemap, Tile tile) {
         Vector3Int[] positions = new Vector3Int[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
         TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
@@ -483,11 +493,13 @@ public static class Chunks
 
 public struct ChunkState {
     public int state {get; set;}
+    public int tilestate {get; set;}
     public int index {get; set;}
     public Biome biome {get; set;} 
     public ChunkState(int _state, int _col_ind) {
         state =_state;
         index = _col_ind; 
+        tilestate = 0;
         biome = Biome.Default;
     }
 }
