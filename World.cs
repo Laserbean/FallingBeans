@@ -18,7 +18,7 @@ public class World : MonoBehaviour
     // // // const int CHUNK_AREA = CHUNK_SIZE* CHUNK_SIZE;
 
     public Tilemap colorTileMap;
-    public Tilemap solidTileMap;
+    // public Tilemap solidTileMap;
 
     public Tile basictile;
     // TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
@@ -28,7 +28,6 @@ public class World : MonoBehaviour
     public static Dictionary<Vector2Int, element_s[]> world_dict;
     public static Dictionary<Vector2Int, ChunkState> chunkstate_dict;
     public static List<List<Vector2>> list_o_collider_points;
-    public static List<int> collider_index_used; 
     public static List<List<List<Vector2>>> colliderList; 
 
     public static Dictionary<Vector2Int, List<List<Vector2>>> chunkHitbox_dict;
@@ -46,7 +45,7 @@ public class World : MonoBehaviour
 
     // public const int minx = -1, maxx  =3;
     // public const int miny = -1, maxy  =3;
-    public PolygonCollider2D thispolygon; 
+    // public PolygonCollider2D thispolygon; 
     TilePolygon Tilepoly; 
     void Start()
     {
@@ -55,13 +54,11 @@ public class World : MonoBehaviour
         World.world_dict = new Dictionary<Vector2Int, element_s[]>(); 
         World.chunkstate_dict = new Dictionary<Vector2Int, ChunkState>(); 
         World.execution_dict = new Dictionary<Vector2Int, Vector2Int>();
-        World.chunkHitbox_dict = new Dictionary<Vector2Int, List<List<Vector2>>>();
-        World.collider_index_used = new List<int>(); 
-        
+        World.chunkHitbox_dict = new Dictionary<Vector2Int, List<List<Vector2>>>();     
 
         list_o_collider_points = new List<List<Vector2>>();
 
-        thispolygon = this.gameObject.GetComponent<PolygonCollider2D>();
+        // thispolygon = this.gameObject.GetComponent<PolygonCollider2D>();
         Tilepoly = new TilePolygon();
 
         // chunkgen(new Vector2Int(0, 0));
@@ -71,26 +68,28 @@ public class World : MonoBehaviour
             for (int j = miny; j < maxy; j++) {
                 curpos = new Vector2Int(i * Constants.CHUNK_SIZE, j* Constants.CHUNK_SIZE);
                 chunkgen(curpos);
+                chunkInit(curpos);
 
-                Chunks.fillChunk(curpos, colorTileMap, basictile); //fills with basic tile
-                Chunks.drawChunk(curpos, colorTileMap);
-
-                World.chunkstate_dict.Add(curpos, new ChunkState(1, curindex));
-                World.collider_index_used.Add(curindex++);
                 // Chunks.fillSolidChunk(curpos, solidTileMap, basictile);
             }
         }
-        World.print("done");
+        // World.print("done");
         // InvokeRepeating("MyUpdate", Constants.PERIOD, Constants.PERIOD);
- 
     }
-
     void Update() {
         MyUpdate();
+    }
+    
+    void chunkInit(Vector2Int chunkpos) {
+        Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
+        Chunks.drawChunkTiles(chunkpos, colorTileMap);
     }
 
     void chunkgen(Vector2Int chunkpos)
     {
+        if (World.world_dict.ContainsKey(chunkpos)) {
+            return;
+        }
         element_s[] fish = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
 
         // List<Vector2Int> vlist = Chunks.GetLinearList(chunkpos+ new Vector2Int(8,8), chunkpos + new Vector2Int(14,15));
@@ -106,9 +105,11 @@ public class World : MonoBehaviour
                 fish[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
             }
         }
- 
+        
         World.world_dict.Add(chunkpos, fish);
         World.chunkHitbox_dict.Add(chunkpos, Chunks.GetChunkMesh(chunkpos));
+        World.chunkstate_dict.Add(chunkpos, new ChunkState(1, 0));
+
         // // // Debug.LogError(chunkpos);
 
     }
@@ -211,10 +212,8 @@ public class World : MonoBehaviour
                 } else {
                     World.chunkHitbox_dict.Add(key, Chunks.GetChunkMesh(key));
                 }
-
             }
         }
-        
     }
 
     int UpdateChunk(Vector2Int cpos) {

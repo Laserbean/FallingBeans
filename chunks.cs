@@ -8,7 +8,7 @@ using UnityEngine.Tilemaps;
 public static class Chunks
 {
     // public Vector3Int GetWorldCoordinates(Vector2Int chunkpos, )
-    public static void fillChunk(Vector2Int chunkpos, Tilemap tilemap, Tile tile) {
+    public static void fillChunkWithTiles(Vector2Int chunkpos, Tilemap tilemap, Tile tile) {
         Vector3Int[] positions = new Vector3Int[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
         TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
@@ -33,7 +33,7 @@ public static class Chunks
     }
 
 
-    public static void drawChunk(Vector2Int chunkpos, Tilemap tilemap) {
+    public static void drawChunkTiles(Vector2Int chunkpos, Tilemap tilemap) {
         element_s[] curchunk = World.world_dict[chunkpos];
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
             // if (curchunk[ii].matter == Matter.Solid) {
@@ -484,8 +484,17 @@ public static class Chunks
 public struct ChunkState {
     public int state {get; set;}
     public int index {get; set;}
+    public Biome biome {get; set;} 
     public ChunkState(int _state, int _col_ind) {
         state =_state;
         index = _col_ind; 
+        biome = Biome.Default;
     }
+}
+
+public enum Biome {
+    City,
+    Beach,
+    Ocean,
+    Default
 }
