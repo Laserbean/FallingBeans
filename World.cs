@@ -95,23 +95,8 @@ public class World : MonoBehaviour
         if (World.world_dict.ContainsKey(chunkpos)) {
             return;
         }
-        element_s[] fish = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
-
-        // List<Vector2Int> vlist = Chunks.GetLinearList(chunkpos+ new Vector2Int(8,8), chunkpos + new Vector2Int(14,15));
-        float val = 0.5f; 
-        if (chunkpos.y < 0|| chunkpos.x != 0) { //  ){ // 
-            val = 1f; 
-        }
-        for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
-            // // // cur index in chunk is [ii + ii * Constants.CHUNK_SIZE]
-            if (UnityEngine.Random.Range(0f, 1f) > val ){//&& Chunks.mod(ii,Constants.CHUNK_SIZE) == 0) {
-                fish[ii] = e_gen.Sand(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
-            } else {
-                fish[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
-            }
-        }
         
-        World.world_dict.Add(chunkpos, fish);
+        World.world_dict.Add(chunkpos, WorldGen.ChunkGen(chunkpos));
         World.chunkHitbox_dict.Add(chunkpos, Chunks.GetChunkMesh(chunkpos));
         World.chunkstate_dict.Add(chunkpos, new ChunkState(1));
         // // // Debug.LogError(chunkpos);
