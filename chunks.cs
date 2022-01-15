@@ -333,7 +333,15 @@ public static class Chunks
         // Debug.Log(pos.y + "  mod "  + pos.y % Constants.CHUNK_SIZE);
         // return new Vector2Int(pos.x - pos.x % Constants.CHUNK_SIZE,  pos.y - pos.y % Constants.CHUNK_SIZE);
         return new Vector2Int(pos.x -mod(pos.x, Constants.CHUNK_SIZE),  pos.y - mod(pos.y, Constants.CHUNK_SIZE));
+    }
 
+    public static Vector2Int GetChunkNumber(Vector2Int pos) 
+    {
+        Vector2Int fish = GetChunkPos(pos);
+        /*Returns the origin of the chunk the thing is in*/
+        // Debug.Log(pos.y + "  mod "  + pos.y % Constants.CHUNK_SIZE);
+        // return new Vector2Int(pos.x - pos.x % Constants.CHUNK_SIZE,  pos.y - pos.y % Constants.CHUNK_SIZE);
+        return new Vector2Int((int)(fish.x/Constants.CHUNK_SIZE), (int)(fish.y/Constants.CHUNK_SIZE));
     }
 
     public static element_s GetCell(Vector2Int pos) 
@@ -494,13 +502,16 @@ public static class Chunks
 public struct ChunkState {
     public int state {get; set;}
     public int tilestate {get; set;}
+    public bool colliderChanged {get; set;}
     public int index {get; set;}
     public Biome biome {get; set;} 
-    public ChunkState(int _state, int _col_ind) {
+    public ChunkState(int _state) {
         state =_state;
-        index = _col_ind; 
+        index = -1; 
         tilestate = 0;
         biome = Biome.Default;
+        colliderChanged = false; 
+
     }
 }
 

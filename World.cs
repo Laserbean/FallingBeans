@@ -38,11 +38,11 @@ public class World : MonoBehaviour
 
 
 
-    public int minx = -5, maxx  =5;
-    public int miny = -5, maxy  =5;
+    // public int minx = -5, maxx  =5;
+    // public int miny = -5, maxy  =5;
     
-    // public const int minx = 0, maxx  =1;
-    // public const int miny = 0, maxy  =1;
+    public int minx = 0, maxx  =1;
+    public int miny = 0, maxy  =1;
 
     // public const int minx = -1, maxx  =3;
     // public const int miny = -1, maxy  =3;
@@ -82,7 +82,6 @@ public class World : MonoBehaviour
         // InvokeRepeating("MyUpdate", Constants.PERIOD, Constants.PERIOD);
     }
     void Update() {
-        playerposition = player.transform.position; 
         MyUpdate();
     }
     
@@ -100,9 +99,9 @@ public class World : MonoBehaviour
 
         // List<Vector2Int> vlist = Chunks.GetLinearList(chunkpos+ new Vector2Int(8,8), chunkpos + new Vector2Int(14,15));
         float val = 0.5f; 
-        // if (chunkpos.y < 0|| chunkpos.x != 0) { //  ){ // 
+        if (chunkpos.y < 0|| chunkpos.x != 0) { //  ){ // 
             val = 1f; 
-        // }
+        }
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
             // // // cur index in chunk is [ii + ii * Constants.CHUNK_SIZE]
             if (UnityEngine.Random.Range(0f, 1f) > val ){//&& Chunks.mod(ii,Constants.CHUNK_SIZE) == 0) {
@@ -114,14 +113,13 @@ public class World : MonoBehaviour
         
         World.world_dict.Add(chunkpos, fish);
         World.chunkHitbox_dict.Add(chunkpos, Chunks.GetChunkMesh(chunkpos));
-        World.chunkstate_dict.Add(chunkpos, new ChunkState(1, 0));
-
+        World.chunkstate_dict.Add(chunkpos, new ChunkState(1));
         // // // Debug.LogError(chunkpos);
-
     }
     public GameEvent deleteevent; 
     [SerializeField] private bool isdebug = false;
     void MyUpdate() {
+        playerposition = player.transform.position; 
         float starttime = Time.realtimeSinceStartup;
         float framestart = starttime; 
         // UpdateChunksWithJobs();
@@ -146,24 +144,74 @@ public class World : MonoBehaviour
         // int ii = 0;
         list_o_collider_points.Clear();
 
-        Vector2Int curpos, midpos;
-        midpos = (new Vector2Int((int) (playerposition.x )/2, (int) (playerposition.y)/2));
-        Debug.DrawLine(playerposition,  new Vector3(midpos.x, midpos.y, 0));
+        Vector2Int  midpos;
+        midpos = Chunks.GetChunkPos(new Vector2Int((int) (playerposition.x / Constants.PIXEL_SCALE), (int) (playerposition.y/  Constants.PIXEL_SCALE)));
+        // midpos = (new Vector2Int((int)(midpos.x *Constants.PIXEL_SCALE), (int)(midpos.y *Constants.PIXEL_SCALE)));
+        Debug.DrawLine(playerposition,  new Vector3(midpos.x* Constants.PIXEL_SCALE, midpos.y* Constants.PIXEL_SCALE, 0));
+        
+
+        UpdateCollidersAndTiles2(midpos);
+        // Tilepoly.CreateLevelCollider(Tilepoly.UniteCollisionPolygons(list_o_collider_points), thispolygon);
+        // Debug.Log("CreateCollider"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
+        // Chunks.drawChunk(new Vector2Int(0, -Constants.CHUNK_SIZE), colorTileMap);
+
+        if (isdebug) {
+
+            Debug.Log("Prepare Collider"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
+            Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
+        }
+        starttime = Time.realtimeSinceStartup;
+
+
+        if (isdebug) {
+        Debug.Log("\tTotal Frame"+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
+        }
+    }
+    [SerializeField] bool UseJobs = false; 
+
+    void UpdateCollidersAndTiles(Vector2Int midpos) {
+        midpos = Chunks.GetChunkNumber(midpos);
+        
+        minx = midpos.x - Constants.RENDER_DISTANCE;
+        maxx = midpos.x + Constants.RENDER_DISTANCE;
+        miny = midpos.y - Constants.RENDER_DISTANCE;
+        maxy = midpos.y + Constants.RENDER_DISTANCE;
+
+        // curpos = Chunks.GetChunkPos(new Vector2Int(i * Constants.CHUNK_SIZE, j * Constants.CHUNK_SIZE));
+        Vector2Int curpos; 
+        // drawChunkBox(midpos, Color.green);
+         for (int i = minx; i < maxx+1; i++) {
+            for (int j = miny; j < maxy+1; j++) {
+                curpos = Chunks.GetChunkPos(new Vector2Int(i * Constants.CHUNK_SIZE, j * Constants.CHUNK_SIZE));
+                if ((j > miny && j < maxy) &&( i > minx && i < maxx)) {
+                    drawChunkBox(curpos, Color.green);
+                } else {
+                    drawChunkBox(curpos, Color.magenta);
+                }
+            }
+         }
+
+    }
+
+    void UpdateCollidersAndTiles2(Vector2Int midpos) {
+        midpos = Chunks.GetChunkNumber(midpos);
+
+        Vector2Int curpos; 
         minx = midpos.x - Constants.RENDER_DISTANCE;
         maxx = midpos.x + Constants.RENDER_DISTANCE;
         miny = midpos.y - Constants.RENDER_DISTANCE;
         maxy = midpos.y + Constants.RENDER_DISTANCE;
 
        ChunkState curchunkstate;
-        for (int i = minx -5; i < maxx+5; i++) {
-            for (int j = miny -5; j < maxy+5; j++) {
+        for (int i = minx; i < maxx+1; i++) {
+            for (int j = miny; j < maxy+1; j++) {
                 curpos = Chunks.GetChunkPos(new Vector2Int(i * Constants.CHUNK_SIZE, j * Constants.CHUNK_SIZE));
-                if ((j >= miny && j < maxy) &&( i >= minx && i < maxx)) {
+                if ((j > miny && j < maxy) &&( i > minx && i < maxx)) {
                     if (World.chunkHitbox_dict.ContainsKey(curpos)) {
+                        drawChunkBox(curpos, Color.green);
                         curchunkstate = World.chunkstate_dict[curpos];
 
-                        // list_o_collider_points.AddRange(World.chunkHitbox_dict[curpos]);
-                        if (curchunkstate.state != 0) {
+                        if (curchunkstate.colliderChanged) {
                             deleteevent.Raise2Vector2Int(curpos);
                             GameObject GO = ObjectPooler.SharedInstance.GetPooledObject(0);
                             if (GO != null) {
@@ -174,8 +222,9 @@ public class World : MonoBehaviour
 
                                 GO.GetComponent<ChunkColliderScript>().SetSolidPath(this1, curpos);
                             }
-                        // // // deleteevent.Raise2Vector2Int(curpos);
-                        }  
+                            curchunkstate.colliderChanged = false; 
+                        }
+
                         if (curchunkstate.tilestate == 0) {
                             Chunks.fillChunkWithTiles(curpos, colorTileMap, basictile); //fills with basic tile
                             Chunks.drawChunkTiles(curpos, colorTileMap);
@@ -189,46 +238,34 @@ public class World : MonoBehaviour
                         chunkInit(curpos);
                     }
                 } else {
-                    deleteevent.Raise2Vector2Int(curpos);
-                    Chunks.fillChunkWithNull(curpos, colorTileMap);
+
                     if (World.chunkstate_dict.ContainsKey(curpos)) {
                         curchunkstate = World.chunkstate_dict[curpos];
-                        curchunkstate.tilestate = 0;
-                        World.chunkstate_dict[curpos] = curchunkstate;
+                        if (curchunkstate.tilestate == 1) {
+                            drawChunkBox(curpos, Color.magenta);
+                            deleteevent.Raise2Vector2Int(curpos);
+                            Chunks.fillChunkWithNull(curpos, colorTileMap);
+                            curchunkstate.tilestate = 0;
+                            World.chunkstate_dict[curpos] = curchunkstate;
+                        }
                     }
-
-
                 }
             }
 
         }
-        if (isdebug) {
+        
 
-            Debug.Log("Prepare Collider"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
-            Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
-        }
-        starttime = Time.realtimeSinceStartup;
-
-
-        // Tilepoly.CreateLevelCollider(Tilepoly.UniteCollisionPolygons(list_o_collider_points), thispolygon);
-        // Debug.Log("CreateCollider"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
-
-        // Chunks.drawChunk(new Vector2Int(0, -Constants.CHUNK_SIZE), colorTileMap);
-
-        if (isdebug) {
-        Debug.Log("\tTotal Frame"+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
-        }
     }
-    [SerializeField] bool UseJobs = false; 
+
 
     void UpdateChunks() {
         int result = 0;
+        ChunkState curchunkstate; 
         List<Vector2Int> keyList = new List<Vector2Int>(World.chunkstate_dict.Keys);
         foreach (Vector2Int key in keyList) {
-            if (World.chunkstate_dict[key].state == 1 || World.chunkstate_dict[key].state == 2) {
+            curchunkstate = World.chunkstate_dict[key];
+            if (curchunkstate.state == 1 || curchunkstate.state == 2) {
                 drawChunkBox(key, new Color(1, 0, 0, 0.3f));
-
-                // World.chunkstate_dict[key] = 
                 if (UseJobs) {
                     result = UpdateChunkWithJob(key); //will be chunks later. 
                 } else {
@@ -236,12 +273,13 @@ public class World : MonoBehaviour
                 }
                 // 0 means no changes, 1 means changes
                 if (result == 0) { 
-                    if (World.chunkstate_dict[key].state == 1) {
+                    if (curchunkstate.state == 1) {
                         result = 2; 
                     }
                 }
                 if (result != -1) {
-                    World.chunkstate_dict[key] = new ChunkState(result, World.chunkstate_dict[key].index);
+                    curchunkstate.state = result; 
+                    World.chunkstate_dict[key] = curchunkstate;
                 }
                 // list_o_collider_points.AddRange(Chunks.GetChunkMesh(Chunks.GetChunkPos(key))); 
 
@@ -301,7 +339,7 @@ public class World : MonoBehaviour
             _candidates = candidates,
         };
 
-        JobHandle jobHandle = curjob.Schedule((int)Mathf.Pow(Constants.CHUNK_SIZE, 2), 50);
+        JobHandle jobHandle = curjob.Schedule((int)Mathf.Pow(Constants.CHUNK_SIZE, 2), 100);
         jobHandle.Complete();
 
         Vector3Int curcandidate; 
@@ -346,11 +384,8 @@ public class World : MonoBehaviour
         }
     }
 
-
-
     void ExecuteSwaps() {
-        List<Vector2Int> keyList = new List<Vector2Int>(World.execution_dict.Keys);
-        int curindex; 
+        List<Vector2Int> keyList = new List<Vector2Int>(World.execution_dict.Keys); 
         foreach (Vector2Int fish in keyList) { //fish is destination, value is origin.
             Chunks.Swap(fish, World.execution_dict[fish], colorTileMap);
             // World.chunkstate_dict[key] = 1;
@@ -359,9 +394,10 @@ public class World : MonoBehaviour
             Vector2Int key = World.execution_dict[fish]; //should be called value
 
             Chunks.Edge edge1, edge2;
+            ChunkState curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(fish)]; 
             (edge1, edge2) = Chunks.EdgeType(key);
-            curindex = World.chunkstate_dict[Chunks.GetChunkPos(fish)].index; 
-            World.chunkstate_dict[Chunks.GetChunkPos(fish)] = new ChunkState(1, curindex);
+            curchunkstate.state = 1; 
+            World.chunkstate_dict[Chunks.GetChunkPos(fish)] = curchunkstate;
             if (Chunks.GetCell(fish+ Vector2Int.left).IsFreeFalling <1) {
                 Chunks.TryWakeCell(fish + Vector2Int.left);
             }
@@ -385,25 +421,29 @@ public class World : MonoBehaviour
             if (edge1 == Chunks.Edge.up) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key)+ new Vector2Int(0,Constants.CHUNK_SIZE))) { //up
                     // drawChunkBox(Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE), new Color(0, 1, 0, 1));
-                    curindex = World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE)].index; 
-                    World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE)] = new ChunkState(1, curindex);
+                    curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE)];
+                    curchunkstate.state = 1; 
+                    World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE)] = curchunkstate;
                 }
             } else if (edge1 == Chunks.Edge.down) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE))) {
-                    curindex = World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE)].index;
-                    World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE)] = new ChunkState(1, curindex);
+                    curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE)];
+                    curchunkstate.state = 1; 
+                    World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE)] = curchunkstate;
                 }
             }
 
             if (edge2 == Chunks.Edge.left) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0))) {
-                    curindex = World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0)].index;
-                    World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0)] = new ChunkState(1, curindex);
+                    curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0)];
+                    curchunkstate.state = 1; 
+                    World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0)] = curchunkstate;
                 }
             } else if (edge2 == Chunks.Edge.right) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0))) {
-                    curindex = World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0)].index; 
-                    World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0)] = new ChunkState(1, curindex);
+                    curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0)];
+                    curchunkstate.state = 1; 
+                    World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0)] = curchunkstate;
                 }
             }
             
@@ -417,7 +457,7 @@ public class World : MonoBehaviour
         // Color color = new Color(1, 0, 0, 1);
         Vector3 pos =((Vector3) (Vector3Int) pos1) * Constants.PIXEL_SCALE;
         Vector3 pos2 = new Vector3(pos.x + Constants.CHUNK_SIZE * Constants.PIXEL_SCALE, pos.y +Constants.CHUNK_SIZE * Constants.PIXEL_SCALE, 0);
-
+        // Debug.Log(pos1);
 
         Debug.DrawLine(new Vector3(pos.x, pos.y, 0),new Vector3(pos2.x, pos.y, 0), color, Constants.PERIOD); 
         Debug.DrawLine(new Vector3(pos2.x, pos.y, 0),new Vector3(pos2.x, pos2.y, 0), color, Constants.PERIOD); 
@@ -449,7 +489,9 @@ public class World : MonoBehaviour
     public void AddCell(Vector2Int pos) {
         // Debug.Log(pos);
         if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(pos))) {
-            World.chunkstate_dict[Chunks.GetChunkPos(pos)] = new ChunkState(1, World.chunkstate_dict[Chunks.GetChunkPos(pos)].index);
+            ChunkState curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(pos)];
+            curchunkstate.state = 1;
+            World.chunkstate_dict[Chunks.GetChunkPos(pos)] = curchunkstate;
             Chunks.AddCell(e_gen.Sand(pos), colorTileMap); 
         }
     }
