@@ -18,7 +18,7 @@ public class Constants
     public const float PIXEL_SCALE = 0.125f;
     public const float PERIOD = 0.1f;
     public const int seed = 123;
-    public const int RENDER_DISTANCE = 24;
+    public const int RENDER_DISTANCE = 20;
 
 
     // public const float PERIOD = 0.5f;

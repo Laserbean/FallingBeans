@@ -106,7 +106,7 @@ public class e_gen {
 
         sand.matter = Matter.Powder;
         sand.element = e_name.Sand;
-
+        sand.IsFreeFalling = 0;
         byte off = (byte) Mathf.Round(_random.NextInt(50, 150));
         sand.color = new Color32(255, 244, off, 255);
         sand.inertialResistance = 0.2f;
@@ -127,8 +127,7 @@ public class e_gen {
         thisp.matter = Matter.Bedrock;
         // thisp.element = "bedrock";
         thisp.element = e_name.Bedrock;
-
-
+        thisp.IsFreeFalling = 0;
         byte off = (byte) Mathf.Round(_random.NextInt(50, 150));
         thisp.color = new Color32(0,0,0,0);
         thisp.inertialResistance = 1f;
@@ -235,20 +234,20 @@ public static class e_step {
             
         // }
 
-        if (powder.IsFreeFalling == 0) {
-            Chunks.SetCell(powder);
+        // if (powder.IsFreeFalling == 0) {
+        //     Chunks.SetCell(powder);
 
-            return Vector3Int.one;
-        }
+        //     return Vector3Int.one;
+        // }
         
-        if (_random.NextFloat(0f, 1f) <= powder.inertialResistance) {
-            powder.IsFreeFalling = 0;
-            Chunks.SetCell(powder);
-
-            return Vector3Int.one;
-        }
+        // if (_random.NextFloat(0f, 1f) <= powder.inertialResistance) {
+        //     powder.IsFreeFalling = 0;
+        //     Chunks.SetCell(powder);
+        //     return Vector3Int.one;
+        // }
 
         // powder.IsFreeFalling -=1; 
+        powder.IsFreeFalling = 0;
         Chunks.SetCell(powder);
         return Vector3Int.one;
 

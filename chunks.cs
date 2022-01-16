@@ -502,7 +502,8 @@ public static class Chunks
 public struct ChunkState {
     public int state {get; set;}
     public int tilestate {get; set;}
-    public bool colliderChanged {get; set;}
+    public bool needGenCollider {get; set;}
+    public bool needDrawCollider {get; set;}
     public int index {get; set;}
     public Biome biome {get; set;} 
     public ChunkState(int _state) {
@@ -510,7 +511,9 @@ public struct ChunkState {
         index = -1; 
         tilestate = 0;
         biome = Biome.Default;
-        colliderChanged = true; 
+        needGenCollider = true; 
+        needDrawCollider = true;
+
 
     }
 }
