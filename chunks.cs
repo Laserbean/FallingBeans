@@ -82,9 +82,7 @@ public static class Chunks
         for (int curind =0; curind < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE; curind++) {
             curpos = chunkpos + GetVectorIndex(curind);
             curcell = GetCell(curpos);
-            if (curcell.element == e_name.Sand) {
-                // Debug.Log("FISH");
-            }
+
             if ((curcell.matter == Matter.Powder || curcell.matter == Matter.Solid) && curcell.IsFreeFalling == 0) {
                 fish.Add(GetSquare(curpos)); 
 
