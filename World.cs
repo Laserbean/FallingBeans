@@ -13,6 +13,8 @@ using UnityEngine.Jobs;
 public class World : MonoBehaviour
 {
     public GameObject player;
+    public Camera camera;
+
     public Vector3 playerposition; 
 
     // Global constants
@@ -29,6 +31,8 @@ public class World : MonoBehaviour
     public static Dictionary<Vector2Int, element_s[]> world_dict;
     public static Dictionary<Vector2Int, ChunkState> chunkstate_dict;
     public static List<List<Vector2>> list_o_collider_points;
+    public static List<Vector2Int> LoadedChunksList;
+
     public static List<List<List<Vector2>>> colliderList; 
 
     public static Dictionary<Vector2Int, List<List<Vector2>>> chunkHitbox_dict;
@@ -38,11 +42,11 @@ public class World : MonoBehaviour
 
 
 
-    // public int minx = -5, maxx  =5;
-    // public int miny = -5, maxy  =5;
+    public int minx = -5, maxx  =5;
+    public int miny = -5, maxy  =5;
     
-    public int minx = 0, maxx  =1;
-    public int miny = 0, maxy  =1;
+    // public int minx = 0, maxx  =1;
+    // public int miny = 0, maxy  =1;
 
     // public const int minx = -1, maxx  =3;
     // public const int miny = -1, maxy  =3;
@@ -56,6 +60,8 @@ public class World : MonoBehaviour
         World.chunkstate_dict = new Dictionary<Vector2Int, ChunkState>(); 
         World.execution_dict = new Dictionary<Vector2Int, Vector2Int>();
         World.chunkHitbox_dict = new Dictionary<Vector2Int, List<List<Vector2>>>();     
+        LoadedChunksList = new List<Vector2Int>();
+
 
         list_o_collider_points = new List<List<Vector2>>();
 
@@ -79,11 +85,47 @@ public class World : MonoBehaviour
 
 
         // World.print("done");
-        // InvokeRepeating("MyUpdate", Constants.PERIOD, Constants.PERIOD);
+        StartCoroutine(LoadChunks());
+        StartCoroutine(UnloadChunks());
+        InvokeRepeating("MyUpdate", Constants.PERIOD, Constants.PERIOD);
     }
-    void Update() {
-        MyUpdate();
+    private bool isUpdatingChunks = false;
+    
+    /// <summary>
+    /// Starts and maintains the sequence for loading chunks.
+    /// </summary>
+    /// <param name="done"></param>
+    /// <param name="loadAll"></param>
+    private IEnumerator LoadChunks()
+    {
+        while (true)
+        {
+            isUpdatingChunks = true;
+            yield return StartCoroutine(PerformLoadChunks());                
+            isUpdatingChunks = false;
+            yield return null;
+        }
     }
+
+    /// <summary>
+    /// Starts and maintains the sequence for unloading chunks.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator UnloadChunks()
+    {
+        while (true)
+        {
+            if (!isUpdatingChunks)
+                yield return StartCoroutine(PerformUnloadChunks());
+            yield return null;
+        }
+    }
+
+
+
+    // void Update() {
+        // MyUpdate();
+    // }
     
     void chunkInit(Vector2Int chunkpos) {
         Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
@@ -102,9 +144,17 @@ public class World : MonoBehaviour
         // // // Debug.LogError(chunkpos);
     }
     public GameEvent deleteevent; 
+    Vector3 cammin, cammax; 
+
     [SerializeField] private bool isdebug = false;
     void MyUpdate() {
-        playerposition = player.transform.position; 
+        // playerposition = player.transform.position; 
+        // cammin = camera.ScreenToWorldPoint(Vector3.zero);
+        // cammax = camera.ScreenToWorldPoint(new Vector3(camera.pixelWidth, camera.pixelHeight));
+        // cammin = new Vector3(cammin.x/ Constants.PIXEL_SCALE, cammin.y/ Constants.PIXEL_SCALE);
+        // cammax = new Vector3(cammax.x/ Constants.PIXEL_SCALE, cammax.y/ Constants.PIXEL_SCALE);
+
+
         float starttime = Time.realtimeSinceStartup;
         float framestart = starttime; 
         // UpdateChunksWithJobs();
@@ -114,7 +164,7 @@ public class World : MonoBehaviour
         // }
         if (isdebug) {
             Debug.Log("First "+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
-            Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
+            // Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
         }
 
         starttime = Time.realtimeSinceStartup;
@@ -122,7 +172,7 @@ public class World : MonoBehaviour
         ExecuteSwaps();
         if (isdebug) {
             Debug.Log("Execute swaps"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
-            Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
+            // Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
         }
         starttime = Time.realtimeSinceStartup;
 
@@ -135,7 +185,7 @@ public class World : MonoBehaviour
         Debug.DrawLine(playerposition,  new Vector3(midpos.x* Constants.PIXEL_SCALE, midpos.y* Constants.PIXEL_SCALE, 0));
         
 
-        UpdateCollidersAndTiles2(midpos);
+        // UpdateCollidersAndTiles2(midpos);
         // Tilepoly.CreateLevelCollider(Tilepoly.UniteCollisionPolygons(list_o_collider_points), thispolygon);
         // Debug.Log("CreateCollider"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
         // Chunks.drawChunk(new Vector2Int(0, -Constants.CHUNK_SIZE), colorTileMap);
@@ -143,7 +193,7 @@ public class World : MonoBehaviour
         if (isdebug) {
 
             Debug.Log("Prepare Collider"+((Time.realtimeSinceStartup - starttime)*1000f) + "ms"); 
-            Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
+            // Debug.Log("\tTotal "+((Time.realtimeSinceStartup - framestart)*1000f) + "ms"); 
         }
         starttime = Time.realtimeSinceStartup;
 
@@ -177,7 +227,8 @@ public class World : MonoBehaviour
          }
 
     }
-
+    const int extra = 3; 
+    bool tick = false;
     void UpdateCollidersAndTiles2(Vector2Int midpos) {
         midpos = Chunks.GetChunkNumber(midpos);
 
@@ -188,15 +239,18 @@ public class World : MonoBehaviour
         maxy = midpos.y + Constants.RENDER_DISTANCE;
 
        ChunkState curchunkstate;
-        for (int i = minx; i < maxx+1; i++) {
-            for (int j = miny; j < maxy+1; j++) {
+        for (int i = minx - extra-1; i < maxx+extra; i++) {
+            for (int j = miny- extra-1; j < maxy+extra; j++) {
                 curpos = Chunks.GetChunkPos(new Vector2Int(i * Constants.CHUNK_SIZE, j * Constants.CHUNK_SIZE));
+                if (tick) {
+                
                 if ((j > miny && j < maxy) &&( i > minx && i < maxx)) {
                     if (World.chunkHitbox_dict.ContainsKey(curpos)) {
-                        drawChunkBox(curpos, Color.green);
+                        LoadedChunksList.Add(curpos);
                         curchunkstate = World.chunkstate_dict[curpos];
+                        drawChunkBox(curpos, Color.green);
 
-                        if (curchunkstate.colliderChanged) {
+                        if (curchunkstate.tilestate == 0) {
                             deleteevent.Raise2Vector2Int(curpos);
                             GameObject GO = ObjectPooler.SharedInstance.GetPooledObject(0);
                             if (GO != null) {
@@ -207,21 +261,16 @@ public class World : MonoBehaviour
 
                                 GO.GetComponent<ChunkColliderScript>().SetSolidPath(this1, curpos);
                             }
-                            curchunkstate.colliderChanged = false; 
-                        }
-
-                        if (curchunkstate.tilestate == 0) {
-                            Chunks.fillChunkWithTiles(curpos, colorTileMap, basictile); //fills with basic tile
-                            Chunks.drawChunkTiles(curpos, colorTileMap);
+                            curchunkstate.colliderChanged = false;                     
                             curchunkstate.tilestate = 1;
                         }
                         World.chunkstate_dict[curpos] = curchunkstate;
                         //Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
-
                     } else {
                         chunkgen(curpos);
-                        chunkInit(curpos);
                     }
+                    chunkInit(curpos);
+
                 } else {
 
                     if (World.chunkstate_dict.ContainsKey(curpos)) {
@@ -235,6 +284,11 @@ public class World : MonoBehaviour
                         }
                     }
                 }
+                tick = false;
+                } else {
+                    tick = true; 
+                }
+
             }
 
         }
@@ -264,16 +318,19 @@ public class World : MonoBehaviour
                 }
                 if (result != -1) {
                     curchunkstate.state = result; 
-                    World.chunkstate_dict[key] = curchunkstate;
                 }
                 // list_o_collider_points.AddRange(Chunks.GetChunkMesh(Chunks.GetChunkPos(key))); 
-
-                if (World.chunkHitbox_dict.ContainsKey(key)) {
-                    World.chunkHitbox_dict[key] = Chunks.GetChunkMesh(key);
-                } else {
-                    World.chunkHitbox_dict.Add(key, Chunks.GetChunkMesh(key));
+                if (curchunkstate.colliderChanged) {
+                    if (World.chunkHitbox_dict.ContainsKey(key)) {
+                        World.chunkHitbox_dict[key] = Chunks.GetChunkMesh(key);
+                    } else {
+                        World.chunkHitbox_dict.Add(key, Chunks.GetChunkMesh(key));
+                    }
+                    curchunkstate.colliderChanged = false; 
                 }
             }
+            World.chunkstate_dict[key] = curchunkstate;
+
         }
     }
 
@@ -379,7 +436,12 @@ public class World : MonoBehaviour
             Vector2Int key = World.execution_dict[fish]; //should be called value
 
             Chunks.Edge edge1, edge2;
-            ChunkState curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(fish)]; 
+            ChunkState curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(World.execution_dict[fish])]; 
+            curchunkstate.colliderChanged = true;
+            World.chunkstate_dict[Chunks.GetChunkPos(World.execution_dict[fish])] = curchunkstate; 
+
+            curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(fish)]; 
+            curchunkstate.colliderChanged = true;
             (edge1, edge2) = Chunks.EdgeType(key);
             curchunkstate.state = 1; 
             World.chunkstate_dict[Chunks.GetChunkPos(fish)] = curchunkstate;
@@ -496,17 +558,135 @@ public class World : MonoBehaviour
     }
 
 
+/// <summary>
+    /// Returns a Rect that defines the area where chunks can be loaded in.
+    /// </summary>
+    /// <returns></returns>
+    private Rect GetChunkLoadBounds()
+    {
+        playerposition = player.transform.position; 
+        // cammin = camera.ScreenToWorldPoint(Vector3.zero);
+        // cammax = camera.ScreenToWorldPoint(new Vector3(camera.pixelWidth, camera.pixelHeight));
+        // cammin = new Vector3(cammin.x/ Constants.PIXEL_SCALE, cammin.y/ Constants.PIXEL_SCALE);
+        // cammax = new Vector3(cammax.x/ Constants.PIXEL_SCALE, cammax.y/ Constants.PIXEL_SCALE);
+
+        cammin = playerposition;
+        cammax = playerposition + Vector3.up + Vector3.right;
+        cammin = new Vector3((cammin.x- Constants.RENDER_DISTANCE)/ Constants.PIXEL_SCALE, (cammin.y-Constants.RENDER_DISTANCE)/ Constants.PIXEL_SCALE);
+        cammax = new Vector3((cammax.x+ Constants.RENDER_DISTANCE)/ Constants.PIXEL_SCALE, (cammax.y+Constants.RENDER_DISTANCE)/ Constants.PIXEL_SCALE);
+
+
+        // Vector3 regionStart = Camera.main.transform.position + 
+        //     Vector3.left * Constants.RENDER_DISTANCE + 
+        //     Vector3.down * Constants.RENDER_DISTANCE;
+        // Vector3 regionEnd = Camera.main.transform.position +
+        //     Vector3.right * Constants.RENDER_DISTANCE + 
+        //     Vector3.up * Constants.RENDER_DISTANCE;
+
+        // Convert to int for automatic flooring of coordinates
+        int regionStartX = (int)cammin.x / Constants.CHUNK_SIZE;
+        int regionStartY = (int)cammin.y / Constants.CHUNK_SIZE;
+        int regionEndX = ((int)cammax.x + Constants.CHUNK_SIZE) / Constants.CHUNK_SIZE;
+        int regionEndY = ((int)cammax.y + Constants.CHUNK_SIZE) / Constants.CHUNK_SIZE;
+        Rect loadBoundaries = new Rect(regionStartX, regionStartY, regionEndX - regionStartX, regionEndY - regionStartY);
+        Debug.DrawLine(cammin, cammax);
+        return loadBoundaries;
+    }
+
+        /// <summary>
+    /// Scans and loads chunks in view using a Rect as bounds.
+    /// </summary>
+    /// <param name="loadAll"></param>
+    private IEnumerator PerformLoadChunks()
+    {
+        Rect loadBoundaries = GetChunkLoadBounds();
+        List<Chunk> chunksToLoad = new List<Chunk>();
+        for (int h = (int)loadBoundaries.xMax; h >= (int)loadBoundaries.xMin; h--)
+        {
+            for (int v = (int)loadBoundaries.yMax; v >= (int)loadBoundaries.yMin; v--)
+            {
+                // if ((h < 0 || h >= GenerationManager.Instance.worldWidth / GenerationManager.Instance.chunkSize) ||
+                //     (v < 0 || v >= GenerationManager.Instance.worldHeight / GenerationManager.Instance.chunkSize))
+                //     continue;
+                // Vector3Int chunkPosition = new Vector3Int(h, v, 0);
+                // Vector3Int worldPosition = new Vector3Int(
+                //     h * GenerationManager.Instance.chunkSize,
+                //     v * GenerationManager.Instance.chunkSize, 0);
+                Vector2Int curpos = Chunks.GetChunkPos(new Vector2Int(h * Constants.CHUNK_SIZE, v * Constants.CHUNK_SIZE));
+
+                if (loadBoundaries.Contains(new Vector2(curpos.x/Constants.CHUNK_SIZE, curpos.y/Constants.CHUNK_SIZE)) && !LoadedChunksList.Contains(curpos))
+                {   
+                    ChunkState curchunkstate; 
+                    if (World.chunkHitbox_dict.ContainsKey(curpos)) {
+                    } else {
+                        chunkgen(curpos);
+                    }
+                    curchunkstate = World.chunkstate_dict[curpos];
+                    drawChunkBox(curpos, Color.green);
+
+                    if (curchunkstate.tilestate == 0) {
+                        deleteevent.Raise2Vector2Int(curpos);
+                        GameObject GO = ObjectPooler.SharedInstance.GetPooledObject(0);
+                        if (GO != null) {
+                            GO.SetActive(true);
+                            // GO.GetComponent<ChunkColliderScript>().Test();
+                            List<List<Vector2>> this1 = World.chunkHitbox_dict[curpos];
+                            int thiscount = this1.Count;
+
+                            GO.GetComponent<ChunkColliderScript>().SetSolidPath(this1, curpos);
+                        }
+                        curchunkstate.colliderChanged = false; 
+                        curchunkstate.tilestate = 1;
+                    }
+                    World.chunkstate_dict[curpos] = curchunkstate;
+                    //Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
+                    chunkInit(curpos);
+                    LoadedChunksList.Add(curpos);
+                    yield return null;
+                }
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Unloads chunks that are outside the view, when we're not loading chunks.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator PerformUnloadChunks()
+    {
+        Rect loadBoundaries = GetChunkLoadBounds();
+        ChunkState curchunkstate; 
+
+        List<Vector2Int> chunkunload = new List<Vector2Int>();
+        foreach(Vector2Int curpos in LoadedChunksList) {
+            curchunkstate = World.chunkstate_dict[curpos];
+            if (curchunkstate.tilestate == 1) {
+                if (!loadBoundaries.Contains(new Vector2(curpos.x/Constants.CHUNK_SIZE, curpos.y/Constants.CHUNK_SIZE))) {
+                    chunkunload.Add(curpos);
+                }               
+            }
+
+        }
+
+
+        foreach (Vector2Int curpos in chunkunload)
+        {
+            while (isUpdatingChunks)
+                    yield return null;
+            curchunkstate = World.chunkstate_dict[curpos];
+
+            LoadedChunksList.Remove(curpos);
+            drawChunkBox(curpos, Color.magenta);
+            deleteevent.Raise2Vector2Int(curpos);
+            Chunks.fillChunkWithNull(curpos, colorTileMap);
+
+            curchunkstate.tilestate = 0;
+            World.chunkstate_dict[curpos] = curchunkstate; 
+            yield return null;
+        }
+    }
+
+
+
 }
-
-// [BurstCompile]
-// public struct UpdateChunksJob : IJobParallelFor {
-
-//     public NativeArray<float3> positionArray;
-//     public NativeArray<float> moveYArray;
-//     [ReadOnly] public float deltaTime;
-
-//     public void Execute(int index) {
-
-//     }
-
-// }

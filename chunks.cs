@@ -510,7 +510,7 @@ public struct ChunkState {
         index = -1; 
         tilestate = 0;
         biome = Biome.Default;
-        colliderChanged = false; 
+        colliderChanged = true; 
 
     }
 }
