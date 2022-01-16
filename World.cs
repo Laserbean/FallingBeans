@@ -38,7 +38,7 @@ public class World : MonoBehaviour
 
 
     public const int minx = -5, maxx  =5;
-    public const int miny = -5, maxy  =20;
+    public const int miny = -5, maxy  =5;
     
     // public const int minx = 0, maxx  =1;
     // public const int miny = 0, maxy  =1;
@@ -147,16 +147,10 @@ public class World : MonoBehaviour
                 if (World.chunkHitbox_dict.ContainsKey(curpos)) {
                     // list_o_collider_points.AddRange(World.chunkHitbox_dict[curpos]);
                     if (World.chunkstate_dict[curpos].state != 0) {
-                        deleteevent.Raise2Vector2Int(curpos);
-                        GameObject GO = ObjectPooler.SharedInstance.GetPooledObject(0);
-                        if (GO != null) {
-                            GO.SetActive(true);
-                            // GO.GetComponent<ChunkColliderScript>().Test();
-                            List<List<Vector2>> this1 = World.chunkHitbox_dict[curpos];
-                            int thiscount = this1.Count;
-
-                            GO.GetComponent<ChunkColliderScript>().SetSolidPath(this1, curpos);
-                        }
+                        // deleteevent.Raise2Vector2Int(curpos);
+                        GameObject GO = Chunks.GetChunk((Vector3Int)curpos);
+                        List<List<Vector2>> this1 = World.chunkHitbox_dict[curpos];
+                        GO.GetComponent<ChunkColliderScript>().SetSolidPath(this1, curpos);
                     } else {
                         // deleteevent.Raise2Vector2Int(curpos);
                     }
@@ -392,7 +386,7 @@ public class World : MonoBehaviour
     public void MouseEvent(Vector3 pos1) {
         int radius = (int) pos1.z; 
         radius = 1; 
-        Vector2Int pos = new Vector2Int((int)(pos1.x *8) ,(int) (pos1.y *8));
+        Vector2Int pos = new Vector2Int((int)(pos1.x) ,(int) (pos1.y));
         Vector2Int curpos = Vector2Int.zero; 
                     // AddCell(curpos);
 

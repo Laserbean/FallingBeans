@@ -17,19 +17,41 @@ public static class Chunks
         }
         tilemap.SetTiles(positions, tileArray);
     }
+    public static LayerMask chunkLayer = LayerMask.GetMask("chunkLayer");
+
+
+    public static GameObject GetChunk(Vector3Int position)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(
+            new Vector2(position.x + 0.5f, position.y + 0.5f),
+            Vector2.zero, 0f, chunkLayer);
+        
+        if (hit) {
+            return hit.collider.gameObject;
+        } else {
+            GameObject GO = ObjectPooler.SharedInstance.GetPooledObject(0);
+            GO.SetActive(true);
+            return GO;
+        }
+        // return hit ? hit.collider.gameObject : null;
+    }
 
     public static void fillSolidChunk(Vector2Int chunkpos, Tilemap tilemap, Tile tile) {
-        Vector3Int[] positions = new Vector3Int[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
-        TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
-        for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
-            if(World.world_dict[GetChunkPos(chunkpos)][ii].matter == Matter.Solid) {
-                tileArray[ii] = tile; 
-            } else {
-                tileArray[ii] = null; 
-            }
-            positions[ii] =(Vector3Int)chunkpos + new Vector3Int((int) ii%Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE, 0);
-        }
-        tilemap.SetTiles(positions, tileArray);
+        // Vector3Int[] positions = new Vector3Int[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+        // TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
+        // for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
+        //     if(World.world_dict[GetChunkPos(chunkpos)][ii].matter == Matter.Solid) {
+        //         tileArray[ii] = tile; 
+        //     } else {
+        //         tileArray[ii] = null; 
+        //     }
+        //     positions[ii] =(Vector3Int)chunkpos + new Vector3Int((int) ii%Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE, 0);
+        // }
+        // tilemap.SetTiles(positions, tileArray);
+
+        GameObject GO = GetChunk((Vector3Int)chunkpos);
+            // GO.GetComponent<ChunkColliderScript>().Test();
+        GO.GetComponent<ChunkTileController>().fillSolidChunk(chunkpos, tile);
     }
 
 
@@ -70,6 +92,7 @@ public static class Chunks
 
         curcell = GetCell(curpos);
         for (int curind =0; curind < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE; curind++) {
+            // curpos = chunkpos + GetVectorIndex(curind);
             curpos = chunkpos + GetVectorIndex(curind);
             curcell = GetCell(curpos);
             if (curcell.element == e_name.Sand) {
