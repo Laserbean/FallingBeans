@@ -32,6 +32,7 @@ public class World : MonoBehaviour
     public static Dictionary<Vector2Int, ChunkState> chunkstate_dict;
     public static List<List<Vector2>> list_o_collider_points;
     public static List<Vector2Int> LoadedChunksList;
+    public static List<Vector2Int> SimulationChunkList;
 
     public static List<List<List<Vector2>>> colliderList; 
 
@@ -61,6 +62,7 @@ public class World : MonoBehaviour
         World.execution_dict = new Dictionary<Vector2Int, Vector2Int>();
         World.chunkHitbox_dict = new Dictionary<Vector2Int, List<List<Vector2>>>();     
         LoadedChunksList = new List<Vector2Int>();
+        SimulationChunkList = new List<Vector2Int>();
 
 
         list_o_collider_points = new List<List<Vector2>>();
@@ -124,6 +126,7 @@ public class World : MonoBehaviour
         World.world_dict.Add(chunkpos, WorldGen.ChunkGen(chunkpos));
         World.chunkHitbox_dict.Add(chunkpos, Chunks.GetChunkMesh(chunkpos));
         World.chunkstate_dict.Add(chunkpos, new ChunkState(1));
+        SimulationChunkList.Add(chunkpos);
         // // // Debug.LogError(chunkpos);
     }
     public GameEvent deleteevent; 
@@ -275,7 +278,9 @@ public class World : MonoBehaviour
         int result = 0;
         ChunkState curchunkstate; 
         // List<Vector2Int> keyList = new List<Vector2Int>(World.chunkstate_dict.Keys);
-        foreach (Vector2Int key in LoadedChunksList) {
+        List<Vector2Int> removekey = new List<Vector2Int>();
+
+        foreach (Vector2Int key in SimulationChunkList) {
             curchunkstate = World.chunkstate_dict[key];
             if (curchunkstate.state == 1 || curchunkstate.state == 2) {
                 drawChunkBox(key, new Color(1, 0, 0, 0.3f));
@@ -288,15 +293,18 @@ public class World : MonoBehaviour
                 if (result == 0) { 
                     if (curchunkstate.state == 1) {
                         result = 2; 
+                    } else {
+                        removekey.Add(key);
                     }
                 }
                 if (result != -1) {
                     curchunkstate.state = result; 
                 }
             }
-
-                // list_o_collider_points.AddRange(Chunks.GetChunkMesh(Chunks.GetChunkPos(key))); 
-
+            World.chunkstate_dict[key] = curchunkstate; 
+        }
+        foreach (Vector2Int key in removekey) {
+            SimulationChunkList.Remove(key);
         }
     }
 
@@ -410,6 +418,8 @@ public class World : MonoBehaviour
             curchunkstate.needGenCollider = true;
             (edge1, edge2) = Chunks.EdgeType(key);
             curchunkstate.state = 1; 
+            SimulationChunkList.Add(key);
+
             World.chunkstate_dict[Chunks.GetChunkPos(fish)] = curchunkstate;
             if (Chunks.GetCell(fish+ Vector2Int.left).IsFreeFalling <1) {
                 Chunks.TryWakeCell(fish + Vector2Int.left);
@@ -436,11 +446,13 @@ public class World : MonoBehaviour
                     // drawChunkBox(Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE), new Color(0, 1, 0, 1));
                     curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE)];
                     curchunkstate.state = 1; 
+                    SimulationChunkList.Add(Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE));
                     World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(0,Constants.CHUNK_SIZE)] = curchunkstate;
                 }
             } else if (edge1 == Chunks.Edge.down) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE))) {
                     curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE)];
+                    SimulationChunkList.Add(Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE));
                     curchunkstate.state = 1; 
                     World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(0,Constants.CHUNK_SIZE)] = curchunkstate;
                 }
@@ -449,12 +461,14 @@ public class World : MonoBehaviour
             if (edge2 == Chunks.Edge.left) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0))) {
                     curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0)];
+                    SimulationChunkList.Add(Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0));
                     curchunkstate.state = 1; 
                     World.chunkstate_dict[Chunks.GetChunkPos(key) - new Vector2Int(Constants.CHUNK_SIZE, 0)] = curchunkstate;
                 }
             } else if (edge2 == Chunks.Edge.right) {
                 if (World.chunkstate_dict.ContainsKey(Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0))) {
                     curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0)];
+                    SimulationChunkList.Add(Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0));
                     curchunkstate.state = 1; 
                     World.chunkstate_dict[Chunks.GetChunkPos(key) + new Vector2Int(Constants.CHUNK_SIZE, 0)] = curchunkstate;
                 }
