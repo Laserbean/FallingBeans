@@ -45,10 +45,13 @@ public static class Chunks
 
     public static void drawChunkTiles(Vector2Int chunkpos, Tilemap tilemap) {
         element_s[] curchunk = World.world_dict[chunkpos];
+        element_s[] curground = World.world_dict[chunkpos +Vector2Int.right];
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
-            // if (curchunk[ii].matter == Matter.Solid) {
+            if (curchunk[ii].element != e_name.Nothing) {
                 SetTileColour(curchunk[ii].color, (Vector3Int)curchunk[ii].position, tilemap);
-            // }
+            } else {
+                SetTileColour(curground[ii].color, (Vector3Int)curground[ii].position, tilemap);
+            }
         }
     }
  
@@ -95,212 +98,12 @@ public static class Chunks
         // return fish;
     }
 
-    // public static Vector2[]  GetChunkMesh(Vector2Int chunkpos) {
-    //     // Vector2[] fish = new Vector2[99];
-    //     // MeshFilter meshFilter;
-    //     // PolygonCollider2D polygonCollider;
-    //     List<Vector2> fish = new List<Vector2>();
-
-
-    //     int curind = 0;
-    //     Vector2Int curpos = chunkpos;
-
-    //     Matter curmatter = GetCell(curpos).matter;
-    //     while (curind < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE) {
-    //         curpos = chunkpos + GetVectorIndex(curind);
-    //         if (GetCell(curpos).matter != Matter.Solid && GetCell(curpos).IsFreeFalling > 0) {
-    //         } else {
-    //             fish.Add((Vector2) curpos); 
-    //         }
-    //         curind++;
-    //     }
-
-    //     Vector2[] myArrayOfPoints =  fish.ToArray();
-    //      // We need to convert those Vector2 into Vector3
-    //     Vector3[] vertices3D = System.Array.ConvertAll<Vector2, Vector3>(myArrayOfPoints, v => v);
- 
-    //      // Then, we need to calculate the indices of each vertex.
-    //      // For that, you can use the Triangulator class available in:
-    //      //https://gist.github.com/N-Carter/12242476dc4e4036db34
-    //     Triangulator triangulator = new Triangulator(myArrayOfPoints);
-    //     int[] indices = triangulator.Triangulate();
-
-
-    //     Mesh mesh = new Mesh();
-    //     mesh.vertices = vertices3D;
-    //     mesh.triangles = indices;
-    //     // mesh.colors = colors;
-
-    //     // Recalculate the shape of the mesh
-    //     mesh.RecalculateNormals();
-    //     mesh.RecalculateBounds();
-
-    //     // meshFilter = new MeshFilter(); 
-    //     // meshFilter.mesh = mesh;
-    //     // polygonCollider = new PolygonCollider2D();
- 
-    //     //  // For the collisions, basically you need to add the vertices to your PolygonCollider2D            
-    //     // polygonCollider.points = myArrayOfPoints;
-
-
-    //     //Adapted from 3rd party edge collider optimizer
-    //     int tolerance = 1;
-
-    //     myArrayOfPoints = System.Array.ConvertAll<Vector3, Vector2>(mesh.vertices, v => v);
-    //     List<Vector2> path = new List<Vector2>(myArrayOfPoints);
-    //     path = Collider2DOptimization.ShapeOptimizationHelper.DouglasPeuckerReduction(path, tolerance);
-        
-
-    //     return path.ToArray(); 
-    // }
-    //     // int totalcount = 0;
-        // int curind = 0;
-        // int curfish = 0;
-        // Vector2Int curpos = chunkpos;
-        // Vector2Int startpos;
-        // // Edge curedge = Edge.up; 
-        // int curdir = 4; // 0 is down, 1 is downleft, 2 is left etc. 
-
-
-
-        // Matter curmatter = GetCell(curpos).matter;
-        // while (curind < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE) {
-        //     if (GetCell(curpos).matter != Matter.Solid && GetCell(curpos).IsFreeFalling > 0) {
-        //         curpos = chunkpos + GetVectorIndex(curind);
-        //         curind++;
-        //         totalcount++;
-        //     } else {
-        //         fish.Add((Vector2) curpos); 
-        //         startpos = curpos;
-        //         totalcount++;
-        //         break;
-        //     }
-        // }
-
-        
-    /*
-        bool found = false; 
-        int curcurdir = curdir;
-        // Edge curedge1,  curedge2;
-        while(totalcount < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE) {
-            found = false; 
-            while (!found) {
-                if (curcurdir == curdir || curcurdir == -1) {
-                    if (curcurdir == -1) {
-                        break; 
-                    }
-                    curcurdir = -1;
-                }
-                switch(curdir) {
-                    case 0:
-                        if (EdgeType(curpos+ Vector2Int.down).Item1 != Edge.down) {
-                            curpos += Vector2Int.down;
-                            found = true;
-                            curcurdir = curdir;
-                        }
-                    break;
-                    case 1:
-                    // (curedge1, curedge2) = EdgeType(curpos+ Vector2Int.down + Vector2Int.left);
-                    //     if (curedge1 != Edge.down && curedge2 != Edge.left ) {
-                        if (EdgeType(curpos+ Vector2Int.down + Vector2Int.left) != (Edge.down, Edge.left)) {
-                            curpos += Vector2Int.down + Vector2Int.left;
-                            found = true;
-                            curcurdir = curdir;
-
-                        }
-                    break;
-                    case 2:
-                        if (EdgeType(curpos+ Vector2Int.left).Item2 != Edge.left) {
-                            curpos += Vector2Int.left;
-                            found = true;
-                            curcurdir = curdir;
-
-                        }
-                    break;
-                    case 3:
-                        if (EdgeType(curpos+ Vector2Int.up + Vector2Int.left) != (Edge.up, Edge.left)) {
-                            curpos +=  Vector2Int.up + Vector2Int.left;
-                            found = true;
-                            curcurdir = curdir;
-
-                        }
-                    break;
-                    case 4:
-                        if (EdgeType(curpos+ Vector2Int.up).Item1 != Edge.up) {
-                            curpos +=  Vector2Int.up;
-                            found = true; 
-                            curcurdir = curdir;
-                        }
-                    break;
-                    case 5:
-                        if (EdgeType(curpos+ Vector2Int.up + Vector2Int.right) != (Edge.up, Edge.right)) {
-                            curpos +=  Vector2Int.up + Vector2Int.right;
-                            found = true;
-                            curcurdir = curdir;
-
-                        }
-                    break;
-                    case 6:
-                        if (EdgeType(curpos+ Vector2Int.right).Item2 != Edge.right) {
-                            curpos += Vector2Int.right;
-                            found = true;
-                            curcurdir = curdir;
-                        }
-                    break;
-                    case 7:
-                        if (EdgeType(curpos+ Vector2Int.down + Vector2Int.right) != (Edge.down, Edge.right)) {
-                            curpos += Vector2Int.down + Vector2Int.right;
-                            found = true;
-                        }
-                        curdir = 0;
-                    break;
-                }
-
-            }
-            if (found) {
-                if (fish.Contains(curpos)) {
-                    break;
-                }
-                fish.Add(curpos); 
-            }
-                totalcount++;
-
-            
-        }
-    */
-        // // Vector2 curpos = new Vector2(chunkpos.x, chunkpos.y);         
-        // // // fish[0] = curpos;
-        // // // fish[1] = curpos + new Vector2(0, Constants.CHUNK_SIZE);
-        // // // fish[2] = curpos + new Vector2(Constants.CHUNK_SIZE, Constants.CHUNK_SIZE);
-        // // // fish[3] = curpos + new Vector2(Constants.CHUNK_SIZE, 0);
-
-        // // fish.Add(curpos);
-        // // fish.Add(curpos + new Vector2(0, Constants.CHUNK_SIZE));
-        // // fish.Add(curpos + new Vector2(Constants.CHUNK_SIZE, Constants.CHUNK_SIZE));
-        // // fish.Add(curpos + new Vector2(Constants.CHUNK_SIZE, 0));
-
-
-
-
-    //     return fish;
-    // }
-
     
     public static void Swap(Vector2Int pos1, Vector2Int pos2, Tilemap tilemap) 
     {
         element_s e1, e2;
         e1 = GetCell(pos1);
         e2 = GetCell(pos2);
-        // if (e1.matter == e2.matter) {
-            
-        // } else if (e1.matter == Matter.Solid) {
-        //     TileManager.AddTile(pos2);
-        //     TileManager.RemoveTile(pos1);
-        // } else if (e2.matter == Matter.Solid) {
-        //     TileManager.AddTile(pos1);
-        //     TileManager.RemoveTile(pos2);
-        // }
-
 
         e1.position = pos2;
         e2.position = pos1; 
@@ -520,5 +323,7 @@ public enum Biome {
     City,
     Beach,
     Ocean,
+    Building,
+    House, 
     Default
 }

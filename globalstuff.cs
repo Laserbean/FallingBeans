@@ -24,19 +24,3 @@ public class Constants
     // public const float PERIOD = 0.5f;
 }
 
-public enum e_name {
-    //Solids
-    Bedrock, Stone, 
-
-    //Powders,
-    Sand,
-    //Liquids
-    Water, Oil,
-
-    //Gas,
-    Smoke, 
-
-    //Other
-    Nothing
-    
-}

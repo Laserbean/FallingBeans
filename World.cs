@@ -20,8 +20,8 @@ public class World : MonoBehaviour
     // Global constants
     // // // const int CHUNK_AREA = CHUNK_SIZE* CHUNK_SIZE;
 
-    public Tilemap colorTileMap;
-    // public Tilemap solidTileMap;
+    public Tilemap solidTileMap;
+    public Tilemap roofTileMap;
 
     public Tile basictile;
     // TileBase[] tileArray = new TileBase[Constants.CHUNK_SIZE* Constants.CHUNK_SIZE];
@@ -33,37 +33,24 @@ public class World : MonoBehaviour
     // public static List<List<Vector2>> list_o_collider_points;
     public static List<Vector2Int> LoadedChunksList;
     public static List<Vector2Int> SimulationChunkList;
-
     public static List<List<List<Vector2>>> colliderList; 
-
     public static Dictionary<Vector2Int, List<List<Vector2>>> chunkHitbox_dict;
-
-
     public static Dictionary<Vector2Int, Vector2Int> execution_dict;
-
-
 
     public int minx = -5, maxx  =5;
     public int miny = -5, maxy  =5;
     
-    // public int minx = 0, maxx  =1;
-    // public int miny = 0, maxy  =1;
-
-    // public const int minx = -1, maxx  =3;
-    // public const int miny = -1, maxy  =3;
-    // public PolygonCollider2D thispolygon; 
     TilePolygon Tilepoly; 
     void Start()
     {
         // TileManager.init(basictile, solidTileMap);
-        // colorTileMap = GameObject.Find("solid").GetComponent<Tilemap>();
+        // solidTileMap = GameObject.Find("solid").GetComponent<Tilemap>();
         World.world_dict = new Dictionary<Vector2Int, element_s[]>(); 
         World.chunkstate_dict = new Dictionary<Vector2Int, ChunkState>(); 
         World.execution_dict = new Dictionary<Vector2Int, Vector2Int>();
         World.chunkHitbox_dict = new Dictionary<Vector2Int, List<List<Vector2>>>();     
         LoadedChunksList = new List<Vector2Int>();
         SimulationChunkList = new List<Vector2Int>();
-
 
         // list_o_collider_points = new List<List<Vector2>>();
 
@@ -106,15 +93,23 @@ public class World : MonoBehaviour
         }
     }
 
-
+    public static element_s[] GetChunkData(Vector2Int pos) {
+        if (World.world_dict.ContainsKey(pos)) {
+            return World.world_dict[pos];
+        } else {
+            Debug.LogError("Error. Key doesn't exist");
+            Debug.Break();
+            return new element_s[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE]; 
+        }
+    }
 
     void Update() {
         MyUpdate();
     }
     
     void chunkInit(Vector2Int chunkpos) {
-        Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
-        Chunks.drawChunkTiles(chunkpos, colorTileMap);
+        Chunks.fillChunkWithTiles(chunkpos, solidTileMap, basictile); //fills with basic tile
+        Chunks.drawChunkTiles(chunkpos, solidTileMap);
     }
 
     void chunkgen(Vector2Int chunkpos)
@@ -122,8 +117,8 @@ public class World : MonoBehaviour
         if (World.world_dict.ContainsKey(chunkpos)) {
             return;
         }
-        
-        World.world_dict.Add(chunkpos, WorldGen.ChunkGen(chunkpos));
+        WorldGen.ChunkGen(chunkpos);
+        // .Add(chunkpos, WorldGen.ChunkGen(chunkpos));
         World.chunkHitbox_dict.Add(chunkpos, Chunks.GetChunkMesh(chunkpos));
         World.chunkstate_dict.Add(chunkpos, new ChunkState(1));
         SimulationChunkList.Add(chunkpos);
@@ -242,7 +237,7 @@ public class World : MonoBehaviour
                             // curchunkstate.tilestate = 1;
                         }
                         World.chunkstate_dict[curpos] = curchunkstate;
-                        //Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
+                        //Chunks.fillChunkWithTiles(chunkpos, solidTileMap, basictile); //fills with basic tile
                     } else {
                         chunkgen(curpos);
                     }
@@ -255,7 +250,7 @@ public class World : MonoBehaviour
                         if (curchunkstate.tilestate == 1) {
                             drawChunkBox(curpos, Color.magenta);
                             deleteevent.Raise2Vector2Int(curpos);
-                            Chunks.fillChunkWithNull(curpos, colorTileMap);
+                            Chunks.fillChunkWithNull(curpos, solidTileMap);
                             curchunkstate.tilestate = 0;
                             World.chunkstate_dict[curpos] = curchunkstate;
                         }
@@ -407,7 +402,7 @@ public class World : MonoBehaviour
     void ExecuteSwaps() {
         List<Vector2Int> keyList = new List<Vector2Int>(World.execution_dict.Keys); 
         foreach (Vector2Int fish in keyList) { //fish is destination, value is origin.
-            Chunks.Swap(fish, World.execution_dict[fish], colorTileMap);
+            Chunks.Swap(fish, World.execution_dict[fish], solidTileMap);
             // World.chunkstate_dict[key] = 1;
             
             // Chunks.Edge curedge = 
@@ -523,7 +518,7 @@ public class World : MonoBehaviour
             ChunkState curchunkstate = World.chunkstate_dict[Chunks.GetChunkPos(pos)];
             curchunkstate.state = 1;
             World.chunkstate_dict[Chunks.GetChunkPos(pos)] = curchunkstate;
-            Chunks.AddCell(e_gen.Sand(pos), colorTileMap); 
+            Chunks.AddCell(e_gen.Sand(pos), solidTileMap); 
             if (!SimulationChunkList.Contains(Chunks.GetChunkPos(pos))) {
                 SimulationChunkList.Add(Chunks.GetChunkPos(pos));
             }
@@ -644,7 +639,7 @@ public class World : MonoBehaviour
                         curchunkstate.tilestate = 1;
                     }
                     World.chunkstate_dict[curpos] = curchunkstate;
-                    //Chunks.fillChunkWithTiles(chunkpos, colorTileMap, basictile); //fills with basic tile
+                    //Chunks.fillChunkWithTiles(chunkpos, solidTileMap, basictile); //fills with basic tile
                     chunkInit(curpos);
                     LoadedChunksList.Add(curpos);
                     yield return null;
@@ -684,7 +679,7 @@ public class World : MonoBehaviour
             LoadedChunksList.Remove(curpos);
             drawChunkBox(curpos, Color.magenta);
             deleteevent.Raise2Vector2Int(curpos);
-            Chunks.fillChunkWithNull(curpos, colorTileMap);
+            Chunks.fillChunkWithNull(curpos, solidTileMap);
 
             curchunkstate.needDrawCollider = true; 
             curchunkstate.tilestate = 0;

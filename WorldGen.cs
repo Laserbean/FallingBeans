@@ -12,8 +12,18 @@ using Unity.Jobs;
 using UnityEngine.Jobs;
 
 public static class WorldGen {
-    public static element_s[] ChunkGen(Vector2Int chunkpos) {
-        element_s[] fish = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
+
+    // public static void init() {
+        
+    // }
+
+
+    public static void ChunkGen(Vector2Int chunkpos) {
+        element_s[] wall = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
+        element_s[] ground  = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
+        element_s[] roof  = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
+
+
 
         // List<Vector2Int> vlist = Chunks.GetLinearList(chunkpos+ new Vector2Int(8,8), chunkpos + new Vector2Int(14,15));
         float val = 0.5f; 
@@ -23,12 +33,14 @@ public static class WorldGen {
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
             // // // cur index in chunk is [ii + ii * Constants.CHUNK_SIZE]
             if (UnityEngine.Random.Range(0f, 1f) > val ){//&& Chunks.mod(ii,Constants.CHUNK_SIZE) == 0) {
-                fish[ii] = e_gen.Sand(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+                wall[ii] = e_gen.Brick(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
             } else {
-                fish[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+                wall[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
             }
+            ground[ii] = e_gen.Sand(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
         }
-        return fish;
+        World.world_dict.Add(chunkpos , wall);
+        World.world_dict.Add(chunkpos+ Vector2Int.right, ground);
 
     }
 
