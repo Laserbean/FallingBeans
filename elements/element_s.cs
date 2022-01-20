@@ -99,7 +99,7 @@ public enum e_name {
     Bedrock, Stone, Brick,
 
     //Powders,
-    Sand,
+    Sand, Dirt,
     //Liquids
     Water, Oil,
 

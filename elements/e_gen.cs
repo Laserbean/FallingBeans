@@ -35,6 +35,27 @@ public class e_gen {
         return sand; 
     }
 
+    public static element_s Dirt(Vector2Int pos, Vector2? speed = null) {
+        Vector2 tspeed; 
+        if (speed == null) {
+            tspeed = Vector2.zero;
+        } else {
+            tspeed = (Vector2)speed;
+        }
+        element_s sand = new element_s(pos, tspeed); 
+
+        sand.matter = Matter.Powder;
+        sand.element = e_name.Dirt;
+        sand.IsFreeFalling = 0;
+        byte off = (byte) Mathf.Round(_random.NextInt(100, 120));
+        sand.color = new Color32(off, 60, 50, 255);
+        sand.inertialResistance = 0.2f;
+        sand.airResistance = 0.8f; //inverse
+        sand.friction = 0.6f; 
+        sand.blastResistance=0.2f; 
+        return sand; 
+    }
+
     public static element_s Bedrock(Vector2Int pos, Vector2? speed = null) {
         Vector2 tspeed; 
         if (speed == null) {
