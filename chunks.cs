@@ -46,11 +46,18 @@ public static class Chunks
     public static void drawChunkTiles(Vector2Int chunkpos, Tilemap tilemap) {
         element_s[] curchunk = World.world_dict[chunkpos];
         element_s[] curground = World.world_dict[chunkpos +Vector2Int.right];
+        float ncr = 0.5f;
+        float ncg = 0.5f;
+        float ncb = 0.7f; 
+        Color32 curcolor;
+
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
             if (curchunk[ii].element != e_name.Nothing) {
-                SetTileColour(curchunk[ii].color, (Vector3Int)curchunk[ii].position, tilemap);
+                curcolor = new Color32((byte) (curchunk[ii].color.r *ncr), (byte)(curchunk[ii].color.g * ncg), (byte)(curchunk[ii].color.b * ncb), (byte)(curchunk[ii].color.a));
+                SetTileColour(curcolor , (Vector3Int)curchunk[ii].position, tilemap);
             } else {
-                SetTileColour(curground[ii].color, (Vector3Int)curground[ii].position, tilemap);
+                curcolor = new Color32((byte) (curground[ii].color.r *ncr), (byte)(curground[ii].color.g * ncg), (byte)(curground[ii].color.b * ncb), (byte)(curground[ii].color.a));
+                SetTileColour(curcolor, (Vector3Int)curground[ii].position, tilemap);
             }
         }
     }
@@ -226,8 +233,59 @@ public static class Chunks
         if (mod(curindex, Constants.CHUNK_SIZE)+1-Constants.CHUNK_SIZE== 0) {
             edge2= Edge.right;
         }
-        
         return (edge1, edge2);
+    }
+
+    public static List<int> _layerIndices0, _layerIndices1; 
+
+    public static List<int> layerIndices0() {
+        if (_layerIndices0 == null) {
+            _layerIndices0 = new List<int>();
+            for (int curindex = 0; curindex < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE; curindex++) {
+                if(curindex + Constants.CHUNK_SIZE > Constants.CHUNK_SIZE * Constants.CHUNK_SIZE) {
+                    _layerIndices0.Add(curindex);
+                }else
+                if (curindex < Constants.CHUNK_SIZE) {
+                    _layerIndices0.Add(curindex);
+                } else
+                if (mod(curindex, Constants.CHUNK_SIZE)== 0) {
+                    _layerIndices0.Add(curindex);
+
+                } else
+                if (mod(curindex, Constants.CHUNK_SIZE)+1-Constants.CHUNK_SIZE== 0) {
+                    _layerIndices0.Add(curindex);
+                }
+            }
+        }
+        return _layerIndices0; 
+    }
+
+    public static List<int> layerIndices1() {
+        if (_layerIndices1 == null) {
+            _layerIndices1 = new List<int>();
+            for (int curindex = 0; curindex < Constants.CHUNK_SIZE*Constants.CHUNK_SIZE; curindex++) {
+                if (isNumFromEdge(curindex, Edge.up, 1) || isNumFromEdge(curindex, Edge.down, 1) ||
+                        isNumFromEdge(curindex, Edge.left, 1)||isNumFromEdge(curindex, Edge.right, 1)) {
+                    _layerIndices1.Add(curindex);
+                }
+            }
+        }
+        return _layerIndices1; 
+    }
+
+    public static bool isNumFromEdge(int curindex, Edge edge, int x) {
+        switch(edge) {
+            case Edge.up:
+                return (curindex + (x+1) * Constants.CHUNK_SIZE > Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+            case Edge.down:
+                return curindex < (x+1) * Constants.CHUNK_SIZE;
+            case Edge.left:
+                return mod(curindex, Constants.CHUNK_SIZE) <= x; 
+            case Edge.right:
+                return mod(curindex, Constants.CHUNK_SIZE) >= (Constants.CHUNK_SIZE - (x+1));
+            default:
+                return false; 
+        }
     }
 
     public enum Edge {

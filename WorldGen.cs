@@ -40,7 +40,7 @@ public static class WorldGen {
         noiseY = (pos.y + perlinOffset.y) * 0.01f;
 
         return (Mathf.Clamp(Mathf.PerlinNoise(noiseX, noiseY), 0f, 1f), 
-            Mathf.Clamp(Mathf.PerlinNoise(noiseX + Constants.CHUNK_SIZE + Constants.CHUNK_SIZE/2, noiseY), 0f, 1f));
+            Mathf.Clamp(Mathf.PerlinNoise(noiseX *6f + Constants.CHUNK_SIZE + Constants.CHUNK_SIZE/2, noiseY*6f), 0f, 1f));
     }
 
 
@@ -52,22 +52,84 @@ public static class WorldGen {
             init();
         }
         // List<Vector2Int> vlist = Chunks.GetLinearList(chunkpos+ new Vector2Int(8,8), chunkpos + new Vector2Int(14,15));
-        float aa, bb;
-        (aa, bb) = getCurrentPerlin(chunkpos);
-        if (bb > 0.7) {
+        if (IsBuldingChunk(chunkpos)) {
             BuildingGen(chunkpos);
         } else {
             GroundGen(chunkpos);
-        }
-        
+        }  
+    }
+
+    public static bool IsBuldingChunk(Vector2Int chunkpos) {
+        float aa, bb;
+        (aa, bb) = getCurrentPerlin(chunkpos);
+        return (bb > 0.5);
     }
 
     public static void BuildingGen(Vector2Int chunkpos) {
         element_s[] wall = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
         element_s[] ground = new element_s[(int)Mathf.Pow(Constants.CHUNK_SIZE, 2)];
+        List<int> bricklist = Chunks.layerIndices1();
+
+        float aa, bb;
+        (aa, bb) = getCurrentPerlin(chunkpos);
+        int test = 0b0000; 
+        float doorodds = 0.4f; 
+        Chunks.Edge dooredge = Chunks.Edge.none;
+        if (IsBuldingChunk(chunkpos + Vector2Int.up*Constants.CHUNK_SIZE)) {
+            test |= 0b1000; 
+        } else {
+            if (aa > doorodds) {
+                dooredge = Chunks.Edge.up;
+            }
+        }
+
+        if (IsBuldingChunk(chunkpos + Vector2Int.down*Constants.CHUNK_SIZE)) {
+            test |= 0b0100; 
+        } else {
+            if (aa > doorodds) {
+                dooredge = Chunks.Edge.down;
+            }
+        }
+        
+
+        if (IsBuldingChunk(chunkpos + Vector2Int.left*Constants.CHUNK_SIZE)) {
+            test |= 0b0010; 
+        } else {
+            if (aa > doorodds) {
+                dooredge = Chunks.Edge.left;
+            }
+        }
+
+        if (IsBuldingChunk(chunkpos + Vector2Int.right*Constants.CHUNK_SIZE)) {
+            test |= 0b0001; 
+        } else {
+            if (aa > doorodds) {
+                dooredge = Chunks.Edge.right;
+            }
+        }
+
         for(int ii =0;ii < Mathf.Pow(Constants.CHUNK_SIZE, 2); ii++) {
-            wall[ii] = e_gen.Brick(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
-            ground[ii] = e_gen.Sand(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+            if (bricklist.Contains(ii)) {
+                if ((test & 0b1000) == 0b1000 &&     Chunks.isNumFromEdge(ii, Chunks.Edge.up, 1)      ||
+                        (test & 0b0100) == 0b0100 && Chunks.isNumFromEdge(ii, Chunks.Edge.down,  1)   || 
+                        (test & 0b0010) == 0b0010 && Chunks.isNumFromEdge(ii, Chunks.Edge.left,  1)   ||
+                        (test & 0b0001) == 0b0001 && Chunks.isNumFromEdge(ii, Chunks.Edge.right, 1)    ) {
+                    wall[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+                } else {
+                    if (Chunks.isNumFromEdge(ii, Chunks.Edge.up, 1) && dooredge == Chunks.Edge.up || 
+                        Chunks.isNumFromEdge(ii, Chunks.Edge.down, 1) && dooredge == Chunks.Edge.down || 
+                        Chunks.isNumFromEdge(ii, Chunks.Edge.left, 1) && dooredge == Chunks.Edge.left || 
+                        Chunks.isNumFromEdge(ii, Chunks.Edge.right, 1) && dooredge == Chunks.Edge.right) 
+                    {
+                        wall[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+                    } else {
+                        wall[ii] = e_gen.Brick(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+                    }
+                }
+            } else {
+                wall[ii] = new element_s(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
+            }
+            ground[ii] = e_gen.Stone(chunkpos + new Vector2Int((int)ii % Constants.CHUNK_SIZE, (int)ii/Constants.CHUNK_SIZE));
         }
         World.world_dict.Add(chunkpos , wall);
         World.world_dict.Add(chunkpos+ Vector2Int.right, ground);
